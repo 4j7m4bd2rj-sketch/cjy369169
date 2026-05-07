@@ -1,12 +1,734 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ko">
 <head>
-	<meta charset="UTF-8">
-	<meta http-equiv="X-UA-Compatible" content="IE=edge">
-	<meta name="viewport" content="width=device-width, initial-scale=1.0">
-	<title>Portfolio</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>식탁방위대 — 식자재 공급망 조기경보</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700;900&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
+<style>
+  :root {
+    --bg: #f7f7f5;
+    --surface: #ffffff;
+    --border: #e8e8e4;
+    --text: #1a1a1a;
+    --text-muted: #888880;
+    --accent: #1a1a1a;
+    --danger: #d93025;
+    --warn: #e8851a;
+    --caution: #d4a017;
+    --safe: #2d7a3a;
+    --pending: #c8c8c0;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'Noto Sans KR', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+  }
+
+  /* HEADER */
+  header {
+    background: var(--surface);
+    border-bottom: 1.5px solid var(--border);
+    padding: 0 48px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    height: 64px;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+
+  .logo {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .logo-icon {
+    width: 32px;
+    height: 32px;
+    background: var(--text);
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px;
+  }
+
+  .logo-text {
+    font-weight: 700;
+    font-size: 15px;
+    letter-spacing: -0.3px;
+  }
+
+  .logo-sub {
+    font-size: 11px;
+    color: var(--text-muted);
+    font-weight: 400;
+    margin-top: 1px;
+  }
+
+  .header-meta {
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    color: var(--text-muted);
+    text-align: right;
+    line-height: 1.6;
+  }
+
+  /* MAIN LAYOUT */
+  main {
+    max-width: 1280px;
+    margin: 0 auto;
+    padding: 40px 48px 80px;
+  }
+
+  /* SECTION TITLE */
+  .section-header {
+    display: flex;
+    align-items: baseline;
+    gap: 12px;
+    margin-bottom: 24px;
+    padding-bottom: 12px;
+    border-bottom: 1.5px solid var(--border);
+  }
+
+  .section-title {
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--text);
+  }
+
+  .section-num {
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    color: var(--text-muted);
+  }
+
+  .section-desc {
+    margin-left: auto;
+    font-size: 11px;
+    color: var(--text-muted);
+  }
+
+  section { margin-bottom: 56px; }
+
+  /* ALERT GRADE GRID */
+  .grade-grid {
+    display: grid;
+    grid-template-columns: repeat(6, 1fr);
+    gap: 12px;
+  }
+
+  .grade-card {
+    background: var(--surface);
+    border: 1.5px solid var(--border);
+    border-radius: 12px;
+    padding: 20px 16px;
+    position: relative;
+    overflow: hidden;
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+  }
+
+  .grade-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(0,0,0,0.06);
+  }
+
+  .grade-card.danger { border-top: 3px solid var(--danger); }
+  .grade-card.warn   { border-top: 3px solid var(--warn); }
+  .grade-card.caution{ border-top: 3px solid var(--caution); }
+  .grade-card.safe   { border-top: 3px solid var(--safe); }
+  .grade-card.pending{ border-top: 3px solid var(--pending); opacity: 0.6; }
+
+  .grade-label {
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    margin-bottom: 8px;
+  }
+
+  .grade-card.danger  .grade-label { color: var(--danger); }
+  .grade-card.warn    .grade-label { color: var(--warn); }
+  .grade-card.caution .grade-label { color: var(--caution); }
+  .grade-card.safe    .grade-label { color: var(--safe); }
+  .grade-card.pending .grade-label { color: var(--text-muted); }
+
+  .grade-item {
+    font-size: 18px;
+    font-weight: 700;
+    letter-spacing: -0.5px;
+    margin-bottom: 4px;
+  }
+
+  .grade-hs {
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    color: var(--text-muted);
+    margin-bottom: 12px;
+  }
+
+  .grade-score {
+    font-family: 'DM Mono', monospace;
+    font-size: 22px;
+    font-weight: 500;
+  }
+
+  .grade-card.pending .grade-score { color: var(--text-muted); font-size: 13px; margin-top: 8px; }
+
+  .grade-score-label {
+    font-size: 10px;
+    color: var(--text-muted);
+    margin-top: 2px;
+  }
+
+  .pending-badge {
+    display: inline-block;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 3px 8px;
+    font-size: 10px;
+    color: var(--text-muted);
+    margin-top: 8px;
+  }
+
+  /* CHART GRID */
+  .chart-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+  }
+
+  .chart-card {
+    background: var(--surface);
+    border: 1.5px solid var(--border);
+    border-radius: 12px;
+    padding: 24px;
+  }
+
+  .chart-card.pending-card {
+    opacity: 0.45;
+    background: var(--bg);
+  }
+
+  .chart-title {
+    font-size: 13px;
+    font-weight: 700;
+    margin-bottom: 2px;
+  }
+
+  .chart-subtitle {
+    font-size: 11px;
+    color: var(--text-muted);
+    margin-bottom: 16px;
+    font-family: 'DM Mono', monospace;
+  }
+
+  .chart-wrap {
+    position: relative;
+    height: 180px;
+  }
+
+  .pending-overlay {
+    height: 180px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    border: 1.5px dashed var(--border);
+    border-radius: 8px;
+  }
+
+  .pending-overlay span:first-child {
+    font-size: 24px;
+  }
+
+  .pending-overlay span:last-child {
+    font-size: 11px;
+    color: var(--text-muted);
+  }
+
+  /* COUNTRY SHARE */
+  .share-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 16px;
+  }
+
+  .share-card {
+    background: var(--surface);
+    border: 1.5px solid var(--border);
+    border-radius: 12px;
+    padding: 24px;
+  }
+
+  .share-card.pending-card {
+    opacity: 0.45;
+    background: var(--bg);
+  }
+
+  .share-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 10px;
+  }
+
+  .share-country {
+    font-size: 12px;
+    font-weight: 500;
+    width: 80px;
+    flex-shrink: 0;
+  }
+
+  .share-bar-wrap {
+    flex: 1;
+    height: 6px;
+    background: var(--bg);
+    border-radius: 3px;
+    overflow: hidden;
+  }
+
+  .share-bar {
+    height: 100%;
+    border-radius: 3px;
+    background: var(--text);
+    transition: width 1s ease;
+  }
+
+  .share-pct {
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    color: var(--text-muted);
+    width: 36px;
+    text-align: right;
+    flex-shrink: 0;
+  }
+
+  .share-year-tag {
+    display: inline-block;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 2px 8px;
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    color: var(--text-muted);
+    margin-bottom: 16px;
+  }
+
+  /* FOOTER */
+  footer {
+    border-top: 1.5px solid var(--border);
+    padding: 24px 48px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  footer p {
+    font-size: 11px;
+    color: var(--text-muted);
+    line-height: 1.8;
+  }
+
+  .tag-list {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+
+  .tag {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 3px 10px;
+    font-size: 10px;
+    color: var(--text-muted);
+    font-family: 'DM Mono', monospace;
+  }
+
+  /* HERO */
+  .hero {
+    margin-bottom: 48px;
+    padding: 32px 0 0;
+  }
+
+  .hero-eyebrow {
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    color: var(--text-muted);
+    letter-spacing: 0.08em;
+    margin-bottom: 10px;
+  }
+
+  .hero-title {
+    font-size: 36px;
+    font-weight: 900;
+    letter-spacing: -1.5px;
+    line-height: 1.1;
+    margin-bottom: 12px;
+  }
+
+  .hero-desc {
+    font-size: 13px;
+    color: var(--text-muted);
+    line-height: 1.7;
+    max-width: 560px;
+  }
+
+  .hero-stats {
+    display: flex;
+    gap: 32px;
+    margin-top: 28px;
+    padding-top: 28px;
+    border-top: 1px solid var(--border);
+  }
+
+  .hero-stat-val {
+    font-family: 'DM Mono', monospace;
+    font-size: 22px;
+    font-weight: 500;
+    letter-spacing: -0.5px;
+  }
+
+  .hero-stat-label {
+    font-size: 11px;
+    color: var(--text-muted);
+    margin-top: 3px;
+  }
+
+  @media (max-width: 900px) {
+    .grade-grid { grid-template-columns: repeat(3, 1fr); }
+    .chart-grid { grid-template-columns: repeat(2, 1fr); }
+    .share-grid { grid-template-columns: 1fr; }
+    main { padding: 24px 20px 60px; }
+    header { padding: 0 20px; }
+  }
+</style>
 </head>
 <body>
-  <p>Hello, World!</p>
+
+<header>
+  <div class="logo">
+    <div class="logo-icon">🛡</div>
+    <div>
+      <div class="logo-text">식탁방위대</div>
+      <div class="logo-sub">무역통계 기반 식자재 공급망 조기경보 지수</div>
+    </div>
+  </div>
+  <div class="header-meta">
+    관세청 수출입무역통계 · aT 식품산업통계정보<br>
+    분석기간 2018–2025 · 관측기준 역년(Calendar Year)
+  </div>
+</header>
+
+<main>
+
+  <!-- HERO -->
+  <div class="hero">
+    <div class="hero-eyebrow">MOOTONG DAECHEOP 2026 — 제1회 무역통계 활용·분석 경진대회</div>
+    <div class="hero-title">식자재 공급망,<br>위험 신호를 읽는다</div>
+    <div class="hero-desc">
+      수입 단가 변동성·수입량 증감률·특정 국가 의존도를 종합한 조기경보 지수로
+      식자재별 공급 리스크를 위험·주의·관찰·안정 4단계로 분류합니다.
+    </div>
+    <div class="hero-stats">
+      <div>
+        <div class="hero-stat-val">6</div>
+        <div class="hero-stat-label">분석 품목</div>
+      </div>
+      <div>
+        <div class="hero-stat-val">2018–2025</div>
+        <div class="hero-stat-label">분석 기간</div>
+      </div>
+      <div>
+        <div class="hero-stat-val">3</div>
+        <div class="hero-stat-label">핵심 지표</div>
+      </div>
+      <div>
+        <div class="hero-stat-val">4</div>
+        <div class="hero-stat-label">경보 등급</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 01 조기경보 등급 -->
+  <section>
+    <div class="section-header">
+      <span class="section-num">01</span>
+      <span class="section-title">품목별 조기경보 등급</span>
+      <span class="section-desc">지수 산출 기준: 단가 변동성 · 수입량 증감률 · 국가 의존도</span>
+    </div>
+    <div class="grade-grid">
+
+      <div class="grade-card pending">
+        <div class="grade-label">미분석</div>
+        <div class="grade-item">고춧가루</div>
+        <div class="grade-hs">HS 0904</div>
+        <div class="pending-badge">데이터 준비 중</div>
+      </div>
+
+      <div class="grade-card pending">
+        <div class="grade-label">미분석</div>
+        <div class="grade-item">커피</div>
+        <div class="grade-hs">HS 0901</div>
+        <div class="pending-badge">데이터 준비 중</div>
+      </div>
+
+      <div class="grade-card warn">
+        <div class="grade-label">주의</div>
+        <div class="grade-item">밀</div>
+        <div class="grade-hs">HS 1001</div>
+        <div class="grade-score">—</div>
+        <div class="grade-score-label">지수 산출 예정</div>
+      </div>
+
+      <div class="grade-card danger">
+        <div class="grade-label">위험</div>
+        <div class="grade-item">옥수수</div>
+        <div class="grade-hs">HS 1005</div>
+        <div class="grade-score">—</div>
+        <div class="grade-score-label">지수 산출 예정</div>
+      </div>
+
+      <div class="grade-card pending">
+        <div class="grade-label">미분석</div>
+        <div class="grade-item">돼지고기</div>
+        <div class="grade-hs">HS 0203</div>
+        <div class="pending-badge">데이터 준비 중</div>
+      </div>
+
+      <div class="grade-card pending">
+        <div class="grade-label">미분석</div>
+        <div class="grade-item">소고기</div>
+        <div class="grade-hs">HS 0201</div>
+        <div class="pending-badge">데이터 준비 중</div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- 02 단가 추이 -->
+  <section>
+    <div class="section-header">
+      <span class="section-num">02</span>
+      <span class="section-title">품목별 수입 단가 추이</span>
+      <span class="section-desc">단위: 달러/KG · 출처: 관세청 수출입무역통계</span>
+    </div>
+    <div class="chart-grid">
+
+      <div class="chart-card pending-card">
+        <div class="chart-title">고춧가루</div>
+        <div class="chart-subtitle">HS 0904</div>
+        <div class="pending-overlay"><span>📊</span><span>데이터 준비 중</span></div>
+      </div>
+
+      <div class="chart-card pending-card">
+        <div class="chart-title">커피</div>
+        <div class="chart-subtitle">HS 0901</div>
+        <div class="pending-overlay"><span>📊</span><span>데이터 준비 중</span></div>
+      </div>
+
+      <div class="chart-card">
+        <div class="chart-title">밀</div>
+        <div class="chart-subtitle">HS 1001 · 2018–2025</div>
+        <div class="chart-wrap">
+          <canvas id="wheatChart"></canvas>
+        </div>
+      </div>
+
+      <div class="chart-card">
+        <div class="chart-title">옥수수</div>
+        <div class="chart-subtitle">HS 1005 · 2018–2025</div>
+        <div class="chart-wrap">
+          <canvas id="cornChart"></canvas>
+        </div>
+      </div>
+
+      <div class="chart-card pending-card">
+        <div class="chart-title">돼지고기</div>
+        <div class="chart-subtitle">HS 0203</div>
+        <div class="pending-overlay"><span>📊</span><span>데이터 준비 중</span></div>
+      </div>
+
+      <div class="chart-card pending-card">
+        <div class="chart-title">소고기</div>
+        <div class="chart-subtitle">HS 0201</div>
+        <div class="pending-overlay"><span>📊</span><span>데이터 준비 중</span></div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- 03 국가별 수입 비중 -->
+  <section>
+    <div class="section-header">
+      <span class="section-num">03</span>
+      <span class="section-title">주요 품목 국가별 수입 비중</span>
+      <span class="section-desc">2025년 기준 · 수입금액 기준</span>
+    </div>
+    <div class="share-grid">
+
+      <div class="share-card">
+        <div class="chart-title">밀 (HS 1001)</div>
+        <div class="share-year-tag">2025</div>
+        <div class="share-row">
+          <span class="share-country">미국</span>
+          <div class="share-bar-wrap"><div class="share-bar" style="width:51.8%"></div></div>
+          <span class="share-pct">51.8%</span>
+        </div>
+        <div class="share-row">
+          <span class="share-country">호주</span>
+          <div class="share-bar-wrap"><div class="share-bar" style="width:34%"></div></div>
+          <span class="share-pct">34.0%</span>
+        </div>
+        <div class="share-row">
+          <span class="share-country">캐나다</span>
+          <div class="share-bar-wrap"><div class="share-bar" style="width:5.6%"></div></div>
+          <span class="share-pct">5.6%</span>
+        </div>
+        <div class="share-row">
+          <span class="share-country">기타</span>
+          <div class="share-bar-wrap"><div class="share-bar" style="width:8.6%; background: var(--border)"></div></div>
+          <span class="share-pct">8.6%</span>
+        </div>
+        <div style="margin-top:12px; font-size:11px; color: var(--danger);">
+          ⚠ 상위 2개국 집중도 85.8%
+        </div>
+      </div>
+
+      <div class="share-card">
+        <div class="chart-title">옥수수 (HS 1005)</div>
+        <div class="share-year-tag">2025</div>
+        <div class="share-row">
+          <span class="share-country">미국</span>
+          <div class="share-bar-wrap"><div class="share-bar" style="width:66.6%"></div></div>
+          <span class="share-pct">66.6%</span>
+        </div>
+        <div class="share-row">
+          <span class="share-country">아르헨티나</span>
+          <div class="share-bar-wrap"><div class="share-bar" style="width:13.8%"></div></div>
+          <span class="share-pct">13.8%</span>
+        </div>
+        <div class="share-row">
+          <span class="share-country">브라질</span>
+          <div class="share-bar-wrap"><div class="share-bar" style="width:7.7%"></div></div>
+          <span class="share-pct">7.7%</span>
+        </div>
+        <div class="share-row">
+          <span class="share-country">기타</span>
+          <div class="share-bar-wrap"><div class="share-bar" style="width:11.9%; background: var(--border)"></div></div>
+          <span class="share-pct">11.9%</span>
+        </div>
+        <div style="margin-top:12px; font-size:11px; color: var(--danger);">
+          ⚠ 상위 1개국 집중도 66.6% — 2018년과 동일 패턴 반복
+        </div>
+      </div>
+
+      <div class="share-card pending-card">
+        <div class="chart-title">고춧가루 (HS 0904)</div>
+        <div class="pending-overlay"><span>🗺</span><span>데이터 준비 중</span></div>
+      </div>
+
+      <div class="share-card pending-card">
+        <div class="chart-title">커피 (HS 0901)</div>
+        <div class="pending-overlay"><span>🗺</span><span>데이터 준비 중</span></div>
+      </div>
+
+    </div>
+  </section>
+
+</main>
+
+<footer>
+  <p>
+    출처: 관세청 수출입무역통계(tradedata.go.kr) · 한국농수산식품유통공사 aT 식품산업통계정보<br>
+    본 대시보드는 관세청 무역통계 활용·분석 경진대회(무통대첩 2026) 제출 자료입니다.
+  </p>
+  <div class="tag-list">
+    <span class="tag">무통대첩 2026</span>
+    <span class="tag">식탁방위대</span>
+    <span class="tag">공급망 리스크</span>
+    <span class="tag">조기경보</span>
+  </div>
+</footer>
+
+<script>
+const years = ['2018','2019','2020','2021','2022','2023','2024','2025'];
+
+const chartDefaults = {
+  responsive: true,
+  maintainAspectRatio: false,
+  plugins: {
+    legend: { display: false },
+    tooltip: {
+      callbacks: {
+        label: ctx => `$${ctx.parsed.y.toFixed(4)}/kg`
+      }
+    }
+  },
+  scales: {
+    x: {
+      grid: { display: false },
+      ticks: { font: { family: 'DM Mono', size: 10 }, color: '#888880' }
+    },
+    y: {
+      grid: { color: '#f0f0ec' },
+      ticks: { font: { family: 'DM Mono', size: 10 }, color: '#888880',
+        callback: v => '$' + v.toFixed(2) }
+    }
+  }
+};
+
+// 밀
+new Chart(document.getElementById('wheatChart'), {
+  type: 'line',
+  data: {
+    labels: years,
+    datasets: [{
+      data: [0.2592, 0.2642, 0.2616, 0.3051, 0.4055, 0.3642, 0.3049, 0.2844],
+      borderColor: '#1a1a1a',
+      backgroundColor: 'rgba(26,26,26,0.04)',
+      borderWidth: 2,
+      pointRadius: 4,
+      pointBackgroundColor: '#1a1a1a',
+      tension: 0.3,
+      fill: true
+    }]
+  },
+  options: chartDefaults
+});
+
+// 옥수수
+new Chart(document.getElementById('cornChart'), {
+  type: 'line',
+  data: {
+    labels: years,
+    datasets: [{
+      data: [0.2098, 0.2070, 0.2033, 0.2766, 0.3619, 0.3144, 0.2555, 0.2484],
+      borderColor: '#d93025',
+      backgroundColor: 'rgba(217,48,37,0.04)',
+      borderWidth: 2,
+      pointRadius: 4,
+      pointBackgroundColor: '#d93025',
+      tension: 0.3,
+      fill: true
+    }]
+  },
+  options: chartDefaults
+});
+</script>
 </body>
 </html>
